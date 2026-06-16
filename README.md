@@ -90,7 +90,7 @@ After configuring the environment variables and network settings, upload the fir
 
 Make sure the hardware is wired according to the diagram below.
 
-![[public/board.jpg]]
+![[./public/board.jpg]]
 
 > After the upload is complete, the green LED should turn on. When an object or hand is placed near the sensor, the buzzer should sound.
 

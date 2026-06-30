@@ -106,22 +106,27 @@ Test the system by placing your hand near the sensor and verify whether the devi
 
 If the server downloads the image and returns a classification result, or if a new image appears inside the `images` directory, the system is working correctly.
 
-# Step 5: Database Customization
+# Step 5: Web Dashboard (Client)
 
-The application stores collected data in either a local database or your own database server.
+This project includes a fully functional, real-time Web Dashboard built with **Vue 3, Vite, TypeScript, and TailwindCSS (v4)**. The dashboard automatically syncs with the Flask server to display data from the MongoDB database.
 
-Using the stored data, you can further develop and customize a client dashboard application for easier data management, monitoring, and statistical analysis.
+Features included in the dashboard:
+* **Overview Analytics**: Real-time counters for total waste collected and breakdown by categories.
+* **Interactive Charts**: A pie chart showing the composition ratio and a line chart displaying the daily collection trend of each waste type (Metal, Paper, Plastic).
+* **Live History Table**: A data table (with pagination) that updates automatically when new waste is classified.
+* **Classification Details**: Click on any record in the table to view its associated image, confidence score, and an embedded map pointing to the geographic location where it was captured.
 
-The database can be extended to support additional features such as:
+### Running the Dashboard
 
-* Real-time monitoring of waste classification results
-* Historical data tracking and reporting
-* Waste collection statistics and analytics
-* Device status monitoring
-* Location-based waste management insights
-* Exporting reports for further analysis
+Ensure your backend server (`server.py`) is already running. Open a **new terminal window** and navigate to the `/client` directory:
 
-By building a dedicated dashboard, administrators can efficiently manage the system and gain valuable insights from the collected data.
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Visit the local URL provided in the terminal (usually `http://localhost:5173`) to view and manage your IoT waste classification system.
 
 ---
 

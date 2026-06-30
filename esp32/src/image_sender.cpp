@@ -4,15 +4,15 @@
 bool sendImageSerial(camera_fb_t *fb) {
     if (fb == nullptr) return false;
 
-    // Bắt đầu truyền
+    // start
     Serial.println("START");
     Serial.println(fb->len);
     
-    // Truyền dữ liệu nhị phân
+    // send image data
     Serial.write(fb->buf, fb->len);
     
-    // Kết thúc truyền
-    Serial.println(); // Ký tự ngắt dòng đảm bảo END nằm ở dòng mới
+    // end
+    Serial.println(); // newline character ensures END is on a new line
     Serial.println("END");
 
     return true;

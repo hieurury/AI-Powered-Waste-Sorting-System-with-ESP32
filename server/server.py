@@ -11,6 +11,7 @@ from pymongo import MongoClient
 
 # Flask Web Server
 from flask import Flask, send_from_directory, request, jsonify
+from flask_cors import CORS
 
 # Terminal UI libraries
 from rich.console import Console
@@ -44,6 +45,7 @@ CLASS_NAMES = {
 
 # --- FLASK WEB SERVER SETUP ---
 app = Flask(__name__)
+CORS(app)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
@@ -104,6 +106,39 @@ def upload_image():
     # Return response to ESP32 indicating success
     return jsonify({"status": "success", "result": result, "confidence": float(conf)}), 200
 
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
+    """API Endpoint to fetch waste statistics for dashboard"""
+    return jsonify({
+        "status": "success",
+        "total": sum(stats.values()),
+        "breakdown": stats
+    }), 200
+
+@app.route('/api/history', methods=['GET'])
+def get_history():
+    """API Endpoint to fetch history of waste classification"""
+    if collection is None:
+        return jsonify({"status": "error", "message": "Database not connected"}), 500
+    
+    # Get limit from query parameter, default to 50
+    limit = int(request.args.get('limit', 50))
+    
+    records = list(collection.find().sort("timestamp", -1).limit(limit))
+    
+    # Format records for JSON response
+    formatted_records = []
+    for r in records:
+        r['_id'] = str(r['_id'])
+        if 'timestamp' in r and isinstance(r['timestamp'], datetime):
+            r['timestamp'] = r['timestamp'].isoformat()
+        formatted_records.append(r)
+        
+    return jsonify({
+        "status": "success",
+        "data": formatted_records
+    }), 200
+
 
 # --- FUNCTION: GET DYNAMIC WINDOWS LOCATION ---
 async def get_windows_location_async():
@@ -120,9 +155,20 @@ async def get_windows_location_async():
     except Exception:
         return None
 
+cached_location = None
+cached_location_date = None
+
 def get_dynamic_location():
     """Fetch coordinates and translate to city name"""
+    global cached_location, cached_location_date
+    current_date = datetime.now().date()
+    
+    if cached_location is not None and cached_location_date == current_date:
+        return cached_location
+        
     coords = asyncio.run(get_windows_location_async())
+    result_loc = "Unknown (Please enable Location permissions on Windows)"
+    
     if coords:
         lat, lon = coords
         try:
@@ -132,11 +178,15 @@ def get_dynamic_location():
             if 'address' in res:
                 addr = res['address']
                 city = addr.get('city', addr.get('state', addr.get('county', 'Unknown')))
-                return f"{city} (Lat: {lat:.4f}, Lon: {lon:.4f})"
-            return f"Lat: {lat:.4f}, Lon: {lon:.4f}"
+                result_loc = f"{city} (Lat: {lat:.4f}, Lon: {lon:.4f})"
+            else:
+                result_loc = f"Lat: {lat:.4f}, Lon: {lon:.4f}"
         except:
-            return f"Lat: {lat:.4f}, Lon: {lon:.4f}"
-    return "Unknown (Please enable Location permissions on Windows)"
+            result_loc = f"Lat: {lat:.4f}, Lon: {lon:.4f}"
+            
+    cached_location = result_loc
+    cached_location_date = current_date
+    return cached_location
 
 
 # --- FUNCTION: CLEAR SCREEN ---
@@ -203,6 +253,10 @@ if __name__ == "__main__":
     except Exception as e:
         console.print(f"[bold red]-> ERROR loading AI: {e}[/]")
         exit()
+
+    console.print("[bold yellow]Fetching initial GPS location...[/]")
+    init_loc = get_dynamic_location()
+    console.print(f"[bold green]-> Location fetched: {init_loc}[/]\n")
 
     draw_ui("Waiting for the next object via Wi-Fi...")
     

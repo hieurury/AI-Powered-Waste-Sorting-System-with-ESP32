@@ -52,6 +52,7 @@ def main():
         "pillow",
         "pymongo",
         "flask",
+        "flask-cors",
         "rich",
         "requests",
         "python-dotenv"
